@@ -1,6 +1,7 @@
 # tc-ui
 
-WebUI for [TC(Linux Traffic Control)](https://lartc.org/howto/index.html)
+WebUI for [tcconfig](https://github.com/thombashi/tcconfig) which wraps
+[TC(Linux Traffic Control)](https://lartc.org/howto/index.html)
 
 ## Usage
 
