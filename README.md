@@ -14,11 +14,13 @@ ls /lib/modules/$(uname -r)/kernel/drivers/net/ifb.ko 2>/dev/null && echo yes ||
 Run TC WebUI by docker:
 
 ```bash
-docker run --network=host --privileged --rm -it \
-  -v /lib/modules:/lib/modules:ro ossrs/tc-ui:1 ./tc-ui
+docker run --network=host --privileged -it --restart always -d \
+    --name tc -v /lib/modules:/lib/modules:ro ossrs/tc-ui:1
 ```
 
 > Note: Only support Linux server, because it requires kernel module ifb and host network mode.
+
+> Note: Please use `registry.cn-hangzhou.aliyuncs.com/ossrs/tc-ui:1` in China.
 
 Open [http://localhost:2023](http://localhost:2023) in browser.
 

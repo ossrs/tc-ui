@@ -58,11 +58,13 @@ func doMain(ctx context.Context) error {
 	setDefaultEnv("UI_PORT", "3000")
 	setDefaultEnv("IFACE_FILTER_IPV4", "true")
 	setDefaultEnv("IFACE_FILTER_IPV6", "true")
+	setDefaultEnv("PROXY_ID0_ENABLED", "on")
 	setDefaultEnv("PROXY_ID0_MOUNT", "/restarter/")
 	setDefaultEnv("PROXY_ID0_BACKEND", "http://127.0.0.1:2024")
-	logger.Tf(ctx, "Load .env as NODE_ENV=%v, API_LISTEN=%v, UI_PORT(reactjs)=%v, IFACE_FILTER_IPV4=%v, IFACE_FILTER_IPV6=%v",
+	logger.Tf(ctx, "Load .env as NODE_ENV=%v, API_LISTEN=%v, UI_PORT(reactjs)=%v, IFACE_FILTER_IPV4=%v, IFACE_FILTER_IPV6=%v, PROXY0=%v/%v/%v",
 		os.Getenv("NODE_ENV"), os.Getenv("API_LISTEN"), os.Getenv("UI_PORT"), os.Getenv("IFACE_FILTER_IPV4"),
-		os.Getenv("IFACE_FILTER_IPV6"), os.Getenv("PROXY_ID0_MOUNT"), os.Getenv("PROXY_ID0_BACKEND"),
+		os.Getenv("IFACE_FILTER_IPV6"), os.Getenv("PROXY_ID0_ENABLED"), os.Getenv("PROXY_ID0_MOUNT"),
+		os.Getenv("PROXY_ID0_BACKEND"),
 	)
 
 	addr := fmt.Sprintf("%v", os.Getenv("API_LISTEN"))
@@ -117,18 +119,29 @@ func doMain(ctx context.Context) error {
 		}
 	})
 
-	if pattern := os.Getenv("PROXY_ID0_MOUNT"); pattern != "" {
-		backend := os.Getenv("PROXY_ID0_BACKEND")
-		target, err := url.Parse(backend)
-		if err != nil {
-			return errors.Wrapf(err, "parse backend %v", backend)
-		}
+	for i := 0; i < 8; i++ {
+		enabledKey := fmt.Sprintf("PROXY_ID%v_ENABLED", i)
+		mountKey := fmt.Sprintf("PROXY_ID%v_MOUNT", i)
+		backendKey := fmt.Sprintf("PROXY_ID%v_BACKEND", i)
+		if os.Getenv(enabledKey) != "on" {
+			if os.Getenv(mountKey) != "" {
+				logger.Tf(ctx, "Proxy to %v is disabled", os.Getenv(mountKey))
+			}
+		} else {
+			if pattern := os.Getenv(mountKey); pattern != "" {
+				backend := os.Getenv(backendKey)
+				target, err := url.Parse(backend)
+				if err != nil {
+					return errors.Wrapf(err, "parse backend %v for #%v pattern %v", backend, i, pattern)
+				}
 
-		logger.Tf(ctx, "Proxy %v to %v", pattern, backend)
-		rp := httputil.NewSingleHostReverseProxy(target)
-		http.HandleFunc(pattern, func(w http.ResponseWriter, r *http.Request) {
-			rp.ServeHTTP(w, r)
-		})
+				logger.Tf(ctx, "Proxy #%v %v to %v", i, pattern, backend)
+				rp := httputil.NewSingleHostReverseProxy(target)
+				http.HandleFunc(pattern, func(w http.ResponseWriter, r *http.Request) {
+					rp.ServeHTTP(w, r)
+				})
+			}
+		}
 	}
 
 	reactjsEP := fmt.Sprintf("%v:%v", os.Getenv("UI_HOST"), os.Getenv("UI_PORT"))
