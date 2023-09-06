@@ -8,6 +8,12 @@ export default function NetFilter({gIfaces,
   const [ivVisible, setIvVisible] = React.useState(false);
   const [ivLabel, setIvLabel] = React.useState('IP');
 
+  React.useEffect(() => {
+    const nv = identifyKey;
+    setIvVisible(nv === "serverPort" || nv === "clientPort" || nv === "clientIp");
+    setIvLabel(nv === "clientIp" ? 'IP' : '端口');
+  }, [identifyKey, setIvVisible, setIvLabel]);
+
   const updateIdentify = React.useCallback((e) => {
     const nv = e.target.value;
     setIdentifyKey(nv);
