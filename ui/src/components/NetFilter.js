@@ -55,12 +55,12 @@ export default function NetFilter({onChange, gIfaces}) {
       <Col xs='auto'>
         <Form.Group className="mb-3">
           <Form.Label><b>流量方向</b></Form.Label>
-          <Form.Text> * 上行或下行</Form.Text>
+          <Form.Text> * 流入或流出</Form.Text>
           <InputGroup hasValidation>
             <Form.Select required defaultValue={direction} onChange={(e) => setDirection(e.target.value)}>
               <option value="">--请选择--</option>
-              <option value="incoming">发送到服务器(上行)</option>
-              <option value="outgoing">从服务器接收(下行)</option>
+              <option value="incoming">流入(incoming), 发数据到这个设备</option>
+              <option value="outgoing">流出(outgoing), 从该设备接收数据</option>
             </Form.Select>
             <Form.Control.Feedback type='invalid' tooltip>请选择客户端类型</Form.Control.Feedback>
           </InputGroup>
@@ -73,9 +73,9 @@ export default function NetFilter({onChange, gIfaces}) {
           <InputGroup hasValidation>
             <Form.Select required defaultValue={identifyKey} onChange={updateIdentify}>
               <option value="">--请选择--</option>
-              <option value="serverPort">按服务器端口</option>n>
-              <option value="clientIp">按客户端IP</option>n>
-              <option value="clientPort">按客户端端口</option>
+              <option value="serverPort">按本设备端口</option>n>
+              <option value="clientIp">按对方设备IP</option>n>
+              <option value="clientPort">按对方设备端口</option>
               <option value="all">匹配所有</option>
             </Form.Select>
             <Form.Control.Feedback type='invalid' tooltip>请选择弱网标识</Form.Control.Feedback>

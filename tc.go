@@ -165,8 +165,10 @@ func TcReset(ctx context.Context, w http.ResponseWriter, r *http.Request) error 
 
 	if !isDarwin {
 		args := []string{"--all", iface}
-		if err := exec.CommandContext(ctx, "tcdel", args...).Run(); err != nil {
+		if b, err := exec.CommandContext(ctx, "tcdel", args...).CombinedOutput(); err != nil {
 			return errors.Wrapf(err, "tcdel %v", strings.Join(args, " "))
+		} else if len(b) > 0 {
+			return errors.Errorf("tcdel %v, %v", strings.Join(args, " "), string(b))
 		}
 		logger.Tf(ctx, "tcdel %v", strings.Join(args, " "))
 	}
@@ -401,9 +403,12 @@ func (v *NetworkOptions) Execute(ctx context.Context) error {
 	}
 
 	args = append(args, v.iface)
-	if err := exec.CommandContext(ctx, "tcset", args...).Run(); err != nil {
+	if b, err := exec.CommandContext(ctx, "tcset", args...).CombinedOutput(); err != nil {
 		return errors.Wrapf(err, "tcset %v", strings.Join(args, " "))
+	} else if len(b) > 0 {
+		return errors.Errorf("tcset %v, %v", strings.Join(args, " "), string(b))
 	}
+
 	logger.Tf(ctx, "tcset %v", strings.Join(args, " "))
 	return nil
 }

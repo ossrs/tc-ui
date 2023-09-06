@@ -180,12 +180,14 @@ function SingleStategySetting() {
           </Row>
           <Row>
             <Col xs='auto'>
-              <Button variant="primary" type="button" onClick={setupNetwork} disabled={executing}>
-                设置网络
-              </Button> &nbsp;
-              <Button variant="primary" type="button" onClick={resetNetwork} disabled={executing}>
-                重置网络
-              </Button>
+              <TcErrorBoundary>
+                <Button variant="primary" type="button" onClick={setupNetwork} disabled={executing}>
+                  设置网络
+                </Button> &nbsp;
+                <Button variant="primary" type="button" onClick={resetNetwork} disabled={executing}>
+                  重置网络
+                </Button>
+              </TcErrorBoundary>
             </Col>
           </Row>
           <Row>
