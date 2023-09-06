@@ -2,6 +2,11 @@ ARG ARCH
 
 FROM ${ARCH}ubuntu:focal as build
 
+ARG BUILDPLATFORM
+ARG TARGETPLATFORM
+ARG TARGETARCH
+RUN echo "BUILDPLATFORM: $BUILDPLATFORM, TARGETPLATFORM: $TARGETPLATFORM, TARGETARCH: $TARGETARCH"
+
 # https://serverfault.com/questions/949991/how-to-install-tzdata-on-a-ubuntu-docker-image
 ENV DEBIAN_FRONTEND=noninteractive
 
