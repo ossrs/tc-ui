@@ -167,7 +167,7 @@ func TcReset(ctx context.Context, w http.ResponseWriter, r *http.Request) error 
 		args := []string{"--all", iface}
 		if b, err := exec.CommandContext(ctx, "tcdel", args...).CombinedOutput(); err != nil {
 			return errors.Wrapf(err, "tcdel %v", strings.Join(args, " "))
-		} else if len(b) > 0 {
+		} else if len(b) > 0 && strings.Contains(string(b), "ERROR") {
 			return errors.Errorf("tcdel %v, %v", strings.Join(args, " "), string(b))
 		}
 		logger.Tf(ctx, "tcdel %v", strings.Join(args, " "))
@@ -405,7 +405,7 @@ func (v *NetworkOptions) Execute(ctx context.Context) error {
 	args = append(args, v.iface)
 	if b, err := exec.CommandContext(ctx, "tcset", args...).CombinedOutput(); err != nil {
 		return errors.Wrapf(err, "tcset %v", strings.Join(args, " "))
-	} else if len(b) > 0 {
+	} else if len(b) > 0 && strings.Contains(string(b), "ERROR") {
 		return errors.Errorf("tcset %v, %v", strings.Join(args, " "), string(b))
 	}
 
