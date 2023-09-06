@@ -115,7 +115,7 @@ func doMain(ctx context.Context) error {
 	logger.Tf(ctx, "Handle %v", ep)
 	http.HandleFunc(ep, func(w http.ResponseWriter, r *http.Request) {
 		if err := TcRaw(logger.WithContext(ctx), w, r); err != nil {
-			ohttp.WriteError(ctx, w, r, err)
+			ohttp.WriteCplxError(ctx, w, r, ohttp.SystemError(100), err.Error())
 		}
 	})
 

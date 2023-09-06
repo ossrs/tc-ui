@@ -3,10 +3,12 @@ package main
 import (
 	"bufio"
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/ossrs/go-oryx-lib/errors"
 	ohttp "github.com/ossrs/go-oryx-lib/http"
 	"github.com/ossrs/go-oryx-lib/logger"
+	"io/ioutil"
 	"net"
 	"net/http"
 	"net/http/httputil"
@@ -195,6 +197,45 @@ func TcSetup(ctx context.Context, w http.ResponseWriter, r *http.Request) error 
 }
 
 func TcRaw(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+	q := r.URL.Query()
+	cmd := q.Get("cmd")
+
+	defer r.Body.Close()
+	if b, err := ioutil.ReadAll(r.Body); err != nil {
+		return errors.Wrapf(err, "read body")
+	} else if len(b) > 0 {
+		cmd = string(b)
+	}
+	logger.Tf(ctx, "Start raw cmd=%v", cmd)
+
+	args := strings.Split(cmd, " ")
+	if len(args) == 0 {
+		return errors.New("no cmd")
+	}
+
+	arg0 := args[0]
+	switch arg0 {
+	case "tcset", "tcshow", "tcdel":
+	default:
+		return errors.Errorf("invalid cmd %v", cmd)
+	}
+
+	if b, err := exec.CommandContext(ctx, arg0, args[1:]...).Output(); err != nil {
+		return errors.Wrapf(err, "exec %v", strings.Join(args, " "))
+	} else if len(b) == 0 {
+		logger.Tf(ctx, "exec %v ok", cmd)
+		ohttp.WriteData(ctx, w, r, nil)
+	} else {
+		logger.Tf(ctx, "exec %v output %v", cmd, string(b))
+
+		var res interface{}
+		if err := json.Unmarshal(b, &res); err != nil {
+			return errors.Wrapf(err, "unmarshal %v", string(b))
+		}
+
+		ohttp.WriteData(ctx, w, r, res)
+	}
+
 	return nil
 }
 

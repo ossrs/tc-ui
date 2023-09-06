@@ -46,32 +46,54 @@ Load the docker image:
 docker load -i tc-ui.tar.gz
 ```
 
+## Call HTTP API
+
+Set 10% loss of interface lo:
+
+```bash
+curl http://localhost:2023/tc/api/v1/config/raw -X POST -d 'tcset lo --loss 10%'
+#{"code":0,"data":null}
+```
+
+Get settings of interface lo:
+
+```bash
+curl http://localhost:2023/tc/api/v1/config/raw -X POST -d 'tcshow lo'
+#{"code":0,"data":{"lo":{"incoming":{},"outgoing":{}}}}
+```
+
+Reset all settings of interface lo:
+
+```bash
+curl http://localhost:2023/tc/api/v1/config/raw -X POST -d 'tcdel --all lo'
+#{"code":0,"data":null}
+```
+
+Only allow `tcset`, `tcshow` and `tcdel`, or failed:
+
+```bash
+curl http://localhost:2023/tc/api/v1/config/raw -X POST -d 'ls'
+#{"code":100,"data":"invalid cmd ls"}
+```
+
 ## Development in macOS
+
+Build UI:
+
+```bash
+(cd ui && npm install && npm run build)
+```
 
 Run Go API server in Ubuntu20 server or docker:
 
 ```bash
 docker build -t test -f Dockerfile.dev .
-docker run --privileged --rm -it -v $(pwd):/g -w /g test go run .
+docker run --privileged --rm -it -p 2023:2023 -v $(pwd):/g -w /g test go run .
 ```
 
-> Note: Please run in Ubuntu20 server, macOS docker doesn't support ingress, which requires kernel module ifb.
+> Note: Note that macOS docker doesn't support ingress, which requires kernel module ifb.
 
 > Note: Must run with `--privileged` or failed to run `tc` and `tcpdump` commands.
-
-> Note: Mount `/lib/modules` for ifb kernel module at `/lib/modules/$(uname -r)/kernel/drivers/net/ifb.ko`
-
-> Note: Run with `--network=host` to install ifb for ingress network.
-
-Run react UI in macOS or WebStorm:
-
-```bash
-cd ui
-npm install
-env API_HOST=ubuntu20 npm run start
-```
-
-> Note: Setup the `API_HOST=ubuntu20` to connect the remote Ubuntu API server.
 
 Open http://localhost:3000/ in browser.
 
