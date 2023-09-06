@@ -362,7 +362,10 @@ func (v *NetworkOptions) Execute(ctx context.Context) error {
 
 	// Format the shaping algorithm. We use HTB which doesn't require iptables.
 	args := []string{
-		"--shaping-algo", "htb", // Use HTB which doesn't require iptables.
+		// Overwrite existing traffic shaping rules.
+		"--overwrite",
+		// Use HTB which doesn't require iptables.
+		"--shaping-algo", "htb",
 	}
 
 	// Format the network strategy, that is, loss, delay, rate.
