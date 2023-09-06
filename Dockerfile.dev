@@ -1,0 +1,9 @@
+
+FROM ossrs/srs:ubuntu20 as dist
+
+RUN apt-get update -y && \
+    apt-get install -y tcpdump iputils-ping net-tools dstat iproute2 kmod python3-pip && \
+    rm -rf /var/lib/apt/lists/* && \
+    pip install tcconfig
+
+WORKDIR /g

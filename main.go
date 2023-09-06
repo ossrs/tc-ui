@@ -111,6 +111,14 @@ func doMain(ctx context.Context) error {
 		}
 	})
 
+	ep = "/tc/api/v1/config/raw"
+	logger.Tf(ctx, "Handle %v", ep)
+	http.HandleFunc(ep, func(w http.ResponseWriter, r *http.Request) {
+		if err := TcRaw(logger.WithContext(ctx), w, r); err != nil {
+			ohttp.WriteError(ctx, w, r, err)
+		}
+	})
+
 	ep = "/tc/api/v1/init"
 	logger.Tf(ctx, "Handle %v", ep)
 	http.HandleFunc(ep, func(w http.ResponseWriter, r *http.Request) {

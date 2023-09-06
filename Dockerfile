@@ -30,6 +30,9 @@ RUN if [[ $TARGETARCH == 'arm' ]]; then \
       curl -L https://go.dev/dl/go1.18.10.linux-armv6l.tar.gz |tar -xz -C /usr/local; \
     fi
 
+# Note that git is very important for codecov to discover the .codecov.yml
+RUN apt update && apt install -y gcc g++ make patch
+
 ADD . /g
 WORKDIR /g
 RUN make -j

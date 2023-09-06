@@ -46,14 +46,13 @@ Load the docker image:
 docker load -i tc-ui.tar.gz
 ```
 
-## Development
+## Development in macOS
 
 Run Go API server in Ubuntu20 server or docker:
 
 ```bash
-sudo docker build -t test -f Dockerfile .
-sudo docker run --network=host --privileged --rm -it -v $(pwd):/g -w /g \
-  -v /lib/modules:/lib/modules:ro test go run .
+docker build -t test -f Dockerfile.dev .
+docker run --privileged --rm -it -v $(pwd):/g -w /g test go run .
 ```
 
 > Note: Please run in Ubuntu20 server, macOS docker doesn't support ingress, which requires kernel module ifb.

@@ -194,6 +194,10 @@ func TcSetup(ctx context.Context, w http.ResponseWriter, r *http.Request) error 
 	return nil
 }
 
+func TcRaw(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+	return nil
+}
+
 func TcInit(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	ifaces, err := queryIPNetInterfaces(nil)
 	if err != nil {
