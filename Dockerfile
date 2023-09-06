@@ -39,9 +39,19 @@ RUN make -j
 
 FROM ${ARCH}node:18-slim as ui
 
+ARG MAKEARGS
+RUN echo "MAKEARGS: $MAKEARGS"
+
 ADD . /g
 WORKDIR /g/ui
-RUN npm i && npm run build
+
+# To use if in RUN, see https://github.com/moby/moby/issues/7281#issuecomment-389440503
+# Note that only exists issue like "/bin/sh: 1: [[: not found" for Ubuntu20, no such problem in CentOS7.
+SHELL ["/bin/bash", "-c"]
+
+RUN if [[ $MAKEARGS != 'build-no-ui' ]]; then \
+      npm i && npm run build; \
+    fi
 
 FROM ${ARCH}ubuntu:focal as dist
 

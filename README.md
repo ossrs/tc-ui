@@ -46,7 +46,13 @@ Load the docker image:
 docker load -i tc-ui.tar.gz
 ```
 
-## Call HTTP API
+## HTTP OpenAPI
+
+There is an HTTP OpenAPI, pass cmd in HTTP POST body, for example:
+
+```bash
+curl http://localhost:2023/tc/api/v1/config/raw -X POST -d 'tcshow lo'
+```
 
 Set 10% loss of interface lo:
 
