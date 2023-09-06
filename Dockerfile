@@ -8,9 +8,22 @@ ENV DEBIAN_FRONTEND=noninteractive
 # For TC and tcpdump
 RUN apt-get update -y && apt-get install -y make curl
 
+# To use if in RUN, see https://github.com/moby/moby/issues/7281#issuecomment-389440503
+# Note that only exists issue like "/bin/sh: 1: [[: not found" for Ubuntu20, no such problem in CentOS7.
+SHELL ["/bin/bash", "-c"]
+
 # For Go 1.16
 ENV PATH=$PATH:/usr/local/go/bin
-RUN curl -L https://golang.google.cn/dl/go1.16.12.linux-amd64.tar.gz |tar -xz -C /usr/local
+RUN if [[ $TARGETARCH == 'amd64' ]]; then \
+      curl -L https://go.dev/dl/go1.18.10.linux-amd64.tar.gz |tar -xz -C /usr/local; \
+    fi
+RUN if [[ $TARGETARCH == 'arm64' ]]; then \
+      curl -L https://go.dev/dl/go1.18.10.linux-arm64.tar.gz |tar -xz -C /usr/local; \
+    fi
+# For linux/arm/v7, because ARMv6 is upwardly compatible with ARMv7.
+RUN if [[ $TARGETARCH == 'arm' ]]; then \
+      curl -L https://go.dev/dl/go1.18.10.linux-armv6l.tar.gz |tar -xz -C /usr/local; \
+    fi
 
 ADD . /g
 WORKDIR /g

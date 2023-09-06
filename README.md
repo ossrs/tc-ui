@@ -24,6 +24,28 @@ docker run --network=host --privileged -it --restart always -d \
 
 Open [http://localhost:2023](http://localhost:2023) in browser.
 
+## Export and Load Docker Image
+
+If want to export the docker image:
+
+```bash
+docker pull ossrs/tc-ui:1
+docker save ossrs/tc-ui:1 |gzip > tc-ui.tar.gz
+```
+
+If want to download the arm64 docker image:
+
+```bash
+docker pull --platform linux/arm64 ossrs/tc-ui:1
+docker save ossrs/tc-ui:1 |gzip > tc-ui.tar.gz
+```
+
+Load the docker image:
+
+```bash
+docker load -i tc-ui.tar.gz
+```
+
 ## Development
 
 Run Go API server in Ubuntu20 server or docker:
