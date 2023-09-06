@@ -185,6 +185,7 @@ func TcSetup(ctx context.Context, w http.ResponseWriter, r *http.Request) error 
 		identifyKey: q.Get("identifyKey"), identifyValue: q.Get("identifyValue"),
 		strategy: q.Get("strategy"), loss: q.Get("loss"), delay: q.Get("delay"),
 		rate: q.Get("rate"), apiPort: strings.Trim(os.Getenv("API_LISTEN"), ":"),
+		delayDistro: q.Get("delayDistro"),
 	}
 	if q.Get("api") != "" {
 		opts.apiPort = q.Get("api")
@@ -305,6 +306,8 @@ type NetworkOptions struct {
 	loss string
 	// If strategy is delay, the delay in ms.
 	delay string
+	// If delayDistro is not empty, it's the delay-distro in ms.
+	delayDistro string
 	// If strategy is rate, the bitrate limit in kbps.
 	rate string
 	// The api listen port, which should be excluded from the network condition.
@@ -346,9 +349,9 @@ func (v *NetworkOptions) Execute(ctx context.Context) error {
 		return errors.New("no rate")
 	}
 	logger.Tf(ctx, "Setup network for darwin=%v, iface=%v, protocol=%v, direction=%v, identify=%v/%v, "+
-		"strategy=%v, loss=%v, delay=%v, rate=%v",
+		"strategy=%v, loss=%v, delay=%v, rate=%v, delayDistro=%v",
 		isDarwin, v.iface, v.protocol, v.direction, v.identifyKey, v.identifyKey, v.strategy, v.loss,
-		v.delay, v.rate,
+		v.delay, v.rate, v.delayDistro,
 	)
 
 	// Ignore if the os is darwin because it doesn't support it yet.
@@ -370,6 +373,11 @@ func (v *NetworkOptions) Execute(ctx context.Context) error {
 	} else if v.strategy == "rate" {
 		// Note that tc is in kbit, while tcset is in kbps.
 		args = append(args, "--rate", fmt.Sprintf("%vkbps", v.rate))
+	}
+
+	// Append other arguments.
+	if v.delayDistro != "" {
+		args = append(args, "--delay-distro", fmt.Sprintf("%v", v.delayDistro))
 	}
 
 	// For direction outgoing, client pull stream from server.

@@ -71,6 +71,7 @@ function SingleStategySetting() {
   const [loss, setLoss] = React.useState();
   const [delay, setDelay] = React.useState();
   const [rate, setRate] = React.useState();
+  const [delayDistro, setDelayDistro] = React.useState();
 
   const [gIfaces, setGIfaces] = React.useState();
   const [ifbs, setIfbs] = React.useState();
@@ -107,12 +108,15 @@ function SingleStategySetting() {
   }, [setIface, setProtocol, setDirection, setIdentifyKey, setIdentifyValue]);
 
   // When user change strategy.
-  const updateStategy = React.useCallback((strategy, loss, delay, rate) => {
+  const updateStategy = React.useCallback((strategy, loss, delay, rate, delayDistro) => {
+    if (delayDistro && Number(delayDistro) > Number(delay)) return alert(`延迟抖动${delayDistro}不能大于延迟${delay}`);
+
     setStrategy(strategy);
     setLoss(loss);
     setDelay(delay);
     setRate(rate);
-    console.log(`update strategy strategy=${strategy}, loss=${loss}, delay=${delay}, rate=${rate}`)
+    setDelayDistro(delayDistro);
+    console.log(`update strategy strategy=${strategy}, loss=${loss}, delay=${delay}, rate=${rate}, delayDistro=${delayDistro}`);
   }, [setStrategy, setLoss, setDelay, setRate]);
 
   // Reset the TC config.
@@ -139,6 +143,10 @@ function SingleStategySetting() {
       setValidated(true);
       return;
     }
+    if (delayDistro && Number(delayDistro) > Number(delay)) {
+      setValidated(true);
+      return alert(`延迟抖动${delayDistro}不能大于延迟${delay}`);
+    }
 
     setExecuting(true);
     const queries = [
@@ -151,6 +159,7 @@ function SingleStategySetting() {
       loss && strategy === 'loss' ? `loss=${loss}` : null,
       delay && strategy === 'delay' ? `delay=${delay}` : null,
       rate && strategy === 'rate' ? `rate=${rate}` : null,
+      delayDistro && strategy === 'delay' ? `delayDistro=${delayDistro}` : null,
       `api=${window.location.port}`,
     ].filter(e => e);
     axios.get(`/tc/api/v1/config/setup?${queries.join('&')}`).then(res => {
@@ -161,7 +170,7 @@ function SingleStategySetting() {
       await new Promise(resolve => setTimeout(resolve, 300));
       setExecuting(false);
     });
-  }, [iface, protocol, direction, identifyKey, identifyValue, strategy, loss, delay, rate, handleError, setExecuting, ref, setRefresh]);
+  }, [iface, protocol, direction, identifyKey, identifyValue, strategy, loss, delay, rate, delayDistro, handleError, setExecuting, ref, setRefresh]);
 
   return <Accordion defaultActiveKey="0">
     <Accordion.Item eventKey="0">
@@ -213,10 +222,11 @@ function StrategySetting({onChange}) {
   const [loss, setLoss] = React.useState('1');
   const [delay, setDelay] = React.useState('1');
   const [rate, setRate] = React.useState('1000000');
+  const [delayDistro, setDelayDistro] = React.useState();
 
   React.useEffect(() => {
-    onChange && onChange(strategy, loss, delay, rate);
-  }, [strategy, loss, delay, rate, onChange]);
+    onChange && onChange(strategy, loss, delay, rate, delayDistro);
+  }, [strategy, loss, delay, rate, delayDistro, onChange]);
 
   return <Row>
     <Col xs='auto'>
@@ -259,6 +269,19 @@ function StrategySetting({onChange}) {
               return <option value={e} key={index}>{e}</option>;
             })}
           </Form.Select>
+          <InputGroup.Text>ms</InputGroup.Text>
+        </InputGroup>
+      </Form.Group>
+    </Col>}
+    {strategy === 'delay' && <Col xs='auto'>
+      <Form.Group className="mb-3">
+        <Form.Label><b>延迟抖动</b></Form.Label>
+        <Form.Text> * 可选, 延迟区间为[{Number(delay)-Number(delayDistro || 0)}, {Number(delay)+Number(delayDistro || 0)}]正态分布</Form.Text>
+        <InputGroup className="mb-3">
+          <Form.Control
+            required type="input" placeholder={`请输入抖动的的值`}
+            onChange={(e) => setDelayDistro(e.target.value)}
+          />
           <InputGroup.Text>ms</InputGroup.Text>
         </InputGroup>
       </Form.Group>
