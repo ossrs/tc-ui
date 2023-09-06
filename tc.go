@@ -168,19 +168,19 @@ func TcReset(ctx context.Context, w http.ResponseWriter, r *http.Request) error 
 		if b, err := exec.CommandContext(ctx, "tcdel", args...).CombinedOutput(); err != nil {
 			return errors.Wrapf(err, "tcdel %v", strings.Join(args, " "))
 		} else if bs := string(b); len(bs) > 0 {
-			hasError := strings.Contains(bs, "ERROR")
+			nnErrors := strings.Count(bs, "ERROR")
 
 			// Ignore the error because it always happens:
 			// 		tc qdisc del dev lo ingress
 			// 		Error: Invalid handle.
 			isIngressDel := strings.Contains(bs, "ingress") && strings.Contains(bs, "qdisc del")
+			canIgnore := nnErrors == 1 && isIngressDel
 
-			if hasError && !isIngressDel {
+			if nnErrors > 0 && !canIgnore {
 				return errors.Errorf("tcdel %v, %v", strings.Join(args, " "), bs)
-			} else {
-				logger.Tf(ctx, "tcdel %v, error=%v, ingress=%v, %v",
-					strings.Join(args, " "), hasError, isIngressDel, bs)
 			}
+			logger.Tf(ctx, "tcdel %v, error=%v, ingress=%v, ignore=%v, %v",
+				strings.Join(args, " "), nnErrors, isIngressDel, canIgnore, bs)
 		} else {
 			logger.Tf(ctx, "tcdel %v", strings.Join(args, " "))
 		}
@@ -430,19 +430,19 @@ func (v *NetworkOptions) Execute(ctx context.Context) error {
 	if b, err := exec.CommandContext(ctx, "tcset", args...).CombinedOutput(); err != nil {
 		return errors.Wrapf(err, "tcset %v", strings.Join(args, " "))
 	} else if bs := string(b); len(bs) > 0 {
-		hasError := strings.Contains(bs, "ERROR")
+		nnErrors := strings.Count(bs, "ERROR")
 
 		// Ignore the error because it always happens:
 		// 		tc qdisc del dev lo ingress
 		// 		Error: Invalid handle.
 		isIngressDel := strings.Contains(bs, "ingress") && strings.Contains(bs, "qdisc del")
+		canIgnore := nnErrors == 1 && isIngressDel
 
-		if hasError && !isIngressDel {
+		if nnErrors > 0 && !canIgnore {
 			return errors.Errorf("tcset %v, %v", strings.Join(args, " "), bs)
-		} else {
-			logger.Tf(ctx, "tcset %v, error=%v, ingress=%v, %v",
-				strings.Join(args, " "), hasError, isIngressDel, bs)
 		}
+		logger.Tf(ctx, "tcset %v, error=%v, ingress=%v, ignore=%v, %v",
+			strings.Join(args, " "), nnErrors, isIngressDel, canIgnore, bs)
 	} else {
 		logger.Tf(ctx, "tcset %v", strings.Join(args, " "))
 	}
