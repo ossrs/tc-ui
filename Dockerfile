@@ -1,4 +1,6 @@
-FROM ubuntu:focal as build
+ARG ARCH
+
+FROM ${ARCH}ubuntu:focal as build
 
 # https://serverfault.com/questions/949991/how-to-install-tzdata-on-a-ubuntu-docker-image
 ENV DEBIAN_FRONTEND=noninteractive
@@ -14,13 +16,13 @@ ADD . /g
 WORKDIR /g
 RUN make -j
 
-FROM node:18-slim as ui
+FROM ${ARCH}node:18-slim as ui
 
 ADD . /g
 WORKDIR /g/ui
 RUN npm i && npm run build
 
-FROM ubuntu:focal as dist
+FROM ${ARCH}ubuntu:focal as dist
 
 RUN apt-get update -y && \
     apt-get install -y tcpdump iputils-ping net-tools dstat iproute2 kmod python3-pip && \

@@ -267,7 +267,7 @@ function StrategySetting({onChange}) {
         <Form.Text> * 目标带宽</Form.Text>
         <InputGroup className="mb-3">
           <Form.Select defaultValue={rate} onChange={(e) => setRate(e.target.value)}>
-            {[1, 10, 100, 300, 500, 800, 1200, 1500, 2000, 2500, 3000, 10000, 30000, 100000, 1000000].map((e, index) => {
+            {[1, 10, 100, 300, 500, 800, 1200, 1500, 2000, 2500, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000, 30000, 100000, 1000000].map((e, index) => {
               return <option value={e} key={index}>{e ? e : '不限'}</option>;
             })}
           </Form.Select>
