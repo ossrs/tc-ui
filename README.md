@@ -82,6 +82,12 @@ curl http://localhost:2023/tc/api/v1/config/raw -X POST -d 'ls'
 #{"code":100,"data":"invalid cmd ls"}
 ```
 
+For TC command, see:
+
+* [Set traffic control (tcset command)](https://tcconfig.readthedocs.io/en/latest/pages/usage/tcset/index.html)
+* [Delete traffic control (tcdel command)](https://tcconfig.readthedocs.io/en/latest/pages/usage/tcdel/index.html)
+* [Display traffic control configurations (tcshow command)](https://tcconfig.readthedocs.io/en/latest/pages/usage/tcshow/index.html)
+
 ## Development in macOS
 
 Build UI:

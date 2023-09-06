@@ -6,6 +6,7 @@ import NetFilter from "../components/NetFilter";
 import {TcConfigQuery} from "../components/TcConfigQuery";
 import axios from "axios";
 import {useErrorHandler} from "react-error-boundary";
+import {SimpleStrategyStorage} from "../utils";
 
 export default function SingleStategy() {
   const [scanPanels, setScanPanels] = React.useState([0]);
@@ -35,10 +36,15 @@ export default function SingleStategy() {
     setScanPanels([ref.current.scanPanels.length, ...ref.current.scanPanels]);
   }, [setScanPanels, ref]);
 
+  // Load filter and strategy from storage.
+  const defaultFilter = SimpleStrategyStorage.loadFilter() || {};
+  const defaultStrategy = SimpleStrategyStorage.loadStrategy() || {};
+  console.log(`load filter=${JSON.stringify(defaultFilter)}, strategy=${JSON.stringify(defaultStrategy)}`);
+
   return <TcErrorBoundary>
     <Container fluid={true}>
       <TcErrorBoundary>
-        <SingleStategySetting/>
+        <SingleStategySetting defaultFilter={defaultFilter} defaultStrategy={defaultStrategy}/>
         <p/>
         {scanPanels?.length && scanPanels.map(e => {
           return <React.Fragment key={e}>
@@ -56,22 +62,22 @@ export default function SingleStategy() {
   </TcErrorBoundary>;
 }
 
-function SingleStategySetting() {
+function SingleStategySetting({defaultFilter, defaultStrategy}) {
   const [executing, setExecuting] = React.useState(false);
   const [refresh, setRefresh] = React.useState(0);
   const [validated, setValidated] = React.useState(false);
   const handleError = useErrorHandler();
 
-  const [iface, setIface] = React.useState();
-  const [protocol, setProtocol] = React.useState();
-  const [direction, setDirection] = React.useState();
-  const [identifyKey, setIdentifyKey] = React.useState();
-  const [identifyValue, setIdentifyValue] = React.useState();
-  const [strategy, setStrategy] = React.useState();
-  const [loss, setLoss] = React.useState();
-  const [delay, setDelay] = React.useState();
-  const [rate, setRate] = React.useState();
-  const [delayDistro, setDelayDistro] = React.useState();
+  const [iface, setIface] = React.useState(defaultFilter.iface);
+  const [protocol, setProtocol] = React.useState(defaultFilter.protocol || 'ip');
+  const [direction, setDirection] = React.useState(defaultFilter.direction || 'incoming');
+  const [identifyKey, setIdentifyKey] = React.useState(defaultFilter.identifyKey || 'all');
+  const [identifyValue, setIdentifyValue] = React.useState(defaultFilter.identifyValue);
+  const [strategy, setStrategy] = React.useState(defaultStrategy.strategy || 'loss');
+  const [loss, setLoss] = React.useState(defaultStrategy.loss || '1');
+  const [delay, setDelay] = React.useState(defaultStrategy.delay || '1');
+  const [rate, setRate] = React.useState(defaultStrategy.rate || '1000000');
+  const [delayDistro, setDelayDistro] = React.useState(defaultStrategy.delayDistro);
 
   const [gIfaces, setGIfaces] = React.useState();
   const [ifbs, setIfbs] = React.useState();
@@ -96,28 +102,6 @@ function SingleStategySetting() {
       setIfbs(ifbs);
     });
   }, [refresh, setIfbs, setGIfaces]);
-
-  // When user change filters.
-  const updateFilter = React.useCallback((iface, protocol, direction, identifyKey, identifyValue) => {
-    setIface(iface);
-    setProtocol(protocol);
-    setDirection(direction);
-    setIdentifyKey(identifyKey);
-    setIdentifyValue(identifyValue);
-    console.log(`update filter iface=${iface}, protocol=${protocol}, direction=${direction}, identify=${identifyKey}/${identifyValue}`)
-  }, [setIface, setProtocol, setDirection, setIdentifyKey, setIdentifyValue]);
-
-  // When user change strategy.
-  const updateStategy = React.useCallback((strategy, loss, delay, rate, delayDistro) => {
-    if (delayDistro && Number(delayDistro) > Number(delay)) return alert(`延迟抖动${delayDistro}不能大于延迟${delay}`);
-
-    setStrategy(strategy);
-    setLoss(loss);
-    setDelay(delay);
-    setRate(rate);
-    setDelayDistro(delayDistro);
-    console.log(`update strategy strategy=${strategy}, loss=${loss}, delay=${delay}, rate=${rate}, delayDistro=${delayDistro}`);
-  }, [setStrategy, setLoss, setDelay, setRate]);
 
   // Reset the TC config.
   const resetNetwork = React.useCallback((e) => {
@@ -147,6 +131,10 @@ function SingleStategySetting() {
       setValidated(true);
       return alert(`延迟抖动${delayDistro}不能大于延迟${delay}`);
     }
+
+    SimpleStrategyStorage.saveFilter(iface, protocol, direction, identifyKey, identifyValue);
+    SimpleStrategyStorage.saveStrategy(strategy, loss, delay, rate, delayDistro);
+    console.log(`save iface=${iface}, protocol=${protocol}, direction=${direction}, identify=${identifyKey}/${identifyValue}, strategy=${strategy}, loss=${loss}, delay=${delay}, rate=${rate}, delayDistro=${delayDistro}`);
 
     setExecuting(true);
     const queries = [
@@ -179,12 +167,19 @@ function SingleStategySetting() {
         <Form noValidate validated={validated}>
           <Row>
             <Col xs='auto'>
-              <NetFilter onChange={updateFilter} gIfaces={gIfaces}/>
+              {gIfaces && <NetFilter gIfaces={gIfaces}
+                         iface={iface} setIface={setIface} protocol={protocol} setProtocol={setProtocol}
+                         direction={direction} setDirection={setDirection} identifyKey={identifyKey}
+                         setIdentifyKey={setIdentifyKey} identifyValue={identifyValue}
+                         setIdentifyValue={setIdentifyValue}/>}
             </Col>
           </Row>
           <Row>
             <Col xs='auto'>
-              <StrategySetting onChange={updateStategy}/>
+              <StrategySetting strategy={strategy} setStrategy={setStrategy} loss={loss}
+                               setLoss={setLoss} delay={delay} setDelay={setDelay}
+                               rate={rate} setRate={setRate} delayDistro={delayDistro}
+                               setDelayDistro={setDelayDistro}/>
             </Col>
           </Row>
           <Row>
@@ -217,17 +212,9 @@ function SingleStategySetting() {
   </Accordion>;
 }
 
-function StrategySetting({onChange}) {
-  const [strategy, setStrategy] = React.useState('loss');
-  const [loss, setLoss] = React.useState('1');
-  const [delay, setDelay] = React.useState('1');
-  const [rate, setRate] = React.useState('1000000');
-  const [delayDistro, setDelayDistro] = React.useState();
-
-  React.useEffect(() => {
-    onChange && onChange(strategy, loss, delay, rate, delayDistro);
-  }, [strategy, loss, delay, rate, delayDistro, onChange]);
-
+function StrategySetting({
+    strategy, setStrategy, loss, setLoss, delay, setDelay, rate, setRate, delayDistro, setDelayDistro,
+  }) {
   return <Row>
     <Col xs='auto'>
       <Form.Group className="mb-3">
@@ -278,7 +265,7 @@ function StrategySetting({onChange}) {
         <Form.Label><b>延迟抖动</b></Form.Label>
         <Form.Text> * 可选, 延迟区间为[{Number(delay)-Number(delayDistro || 0)}, {Number(delay)+Number(delayDistro || 0)}]正态分布</Form.Text>
         <InputGroup className="mb-3">
-          <Form.Control
+          <Form.Control defaultValue={delayDistro}
             required type="input" placeholder={`请输入抖动的的值`}
             onChange={(e) => setDelayDistro(e.target.value)}
           />

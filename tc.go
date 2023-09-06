@@ -333,7 +333,7 @@ func (v *NetworkOptions) Execute(ctx context.Context) error {
 	if v.identifyKey != "all" && v.identifyValue == "" {
 		return errors.Errorf("no identifyValue for identifyKey=%v", v.identifyKey)
 	}
-	if v.identifyKey != "all" && v.identifyKey != "serverPort" && v.identifyKey != "clientPort" && v.identifyKey != "clientIP" {
+	if v.identifyKey != "all" && v.identifyKey != "serverPort" && v.identifyKey != "clientPort" && v.identifyKey != "clientIp" {
 		return errors.Errorf("invalid identifyKey=%v", v.identifyKey)
 	}
 	if v.strategy == "" {

@@ -1,12 +1,10 @@
 import React from "react";
 import {Col, Form, InputGroup, Row} from "react-bootstrap";
 
-export default function NetFilter({onChange, gIfaces}) {
-  const [iface, setIface] = React.useState();
-  const [protocol, setProtocol] = React.useState('ip');
-  const [direction, setDirection] = React.useState('incoming');
-  const [identifyKey, setIdentifyKey] = React.useState('all');
-  const [identifyValue, setIdentifyValue] = React.useState();
+export default function NetFilter({gIfaces,
+    iface, setIface, protocol, setProtocol, direction,
+    setDirection, identifyKey, setIdentifyKey, identifyValue, setIdentifyValue,
+  }) {
   const [ivVisible, setIvVisible] = React.useState(false);
   const [ivLabel, setIvLabel] = React.useState('IP');
 
@@ -16,10 +14,6 @@ export default function NetFilter({onChange, gIfaces}) {
     setIvVisible(nv === "serverPort" || nv === "clientPort" || nv === "clientIp");
     setIvLabel(nv === "clientIp" ? 'IP' : '端口');
   }, [setIdentifyKey, setIvLabel, setIvVisible]);
-
-  React.useEffect(() => {
-    onChange && onChange(iface, protocol, direction, identifyKey, identifyValue);
-  }, [iface, protocol, direction, identifyKey, identifyValue, onChange]);
 
   return (
     <Row>
@@ -89,7 +83,7 @@ export default function NetFilter({onChange, gIfaces}) {
             <Form.Text> * 请输入{ivLabel}</Form.Text>
             <InputGroup hasValidation>
               <Form.Control
-                required type="input" placeholder={`请输入匹配的${ivLabel}`}
+                required type="input" placeholder={`请输入匹配的${ivLabel}`} defaultValue={identifyValue}
                 onChange={(e) => setIdentifyValue(e.target.value)}
               />
               <Form.Control.Feedback type='invalid' tooltip>请输入{ivLabel}</Form.Control.Feedback>
