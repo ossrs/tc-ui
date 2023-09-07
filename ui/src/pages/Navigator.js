@@ -12,6 +12,7 @@ export default function Navigator() {
     const r0 = `${location.pathname}${location.search}`;
     setNavs([
       {eventKey: '1', to: `/tc/p/SingleStategy`, text: '简单弱网'},
+      {eventKey: '2', to: `/tc/p/ComplexStategy`, text: '组合弱网'},
     ].map(e => {
       if (r0.indexOf(e.to) >= 0) {
         e.className = 'text-light';

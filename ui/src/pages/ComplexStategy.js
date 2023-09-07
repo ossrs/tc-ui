@@ -1,15 +1,14 @@
 import React from "react";
 import TcErrorBoundary from "../components/TcErrorBoundary";
 import {Accordion, Container, Form, Row, Col, Button} from "react-bootstrap";
-import Scan from "./Scan";
 import NetFilter from "../components/NetFilter";
 import {TcConfigQuery} from "../components/TcConfigQuery";
 import axios from "axios";
 import {useErrorHandler} from "react-error-boundary";
-import {SimpleStrategyStorage} from "../utils";
+import {ComplexStrategyStorage} from "../utils";
 import {StrategySetting} from "../components/StrategySetting";
 
-export default function SingleStategy() {
+export default function ComplexStategy() {
   const [scanPanels, setScanPanels] = React.useState([0]);
   const [executing, setExecuting] = React.useState(false);
   const [gIfaces, setGIfaces] = React.useState();
@@ -38,32 +37,20 @@ export default function SingleStategy() {
   }, [setScanPanels, ref]);
 
   // Load filter and strategy from storage.
-  const defaultFilter = SimpleStrategyStorage.loadFilter() || {};
-  const defaultStrategy = SimpleStrategyStorage.loadStrategy() || {};
+  const defaultFilter = ComplexStrategyStorage.loadFilter() || {};
+  const defaultStrategy = ComplexStrategyStorage.loadStrategy() || {};
   console.log(`load filter=${JSON.stringify(defaultFilter)}, strategy=${JSON.stringify(defaultStrategy)}`);
 
   return <TcErrorBoundary>
     <Container fluid={true}>
       <TcErrorBoundary>
-        <SingleStategySetting defaultFilter={defaultFilter} defaultStrategy={defaultStrategy}/>
-        <p/>
-        {scanPanels?.length && scanPanels.map(e => {
-          return <React.Fragment key={e}>
-            <Scan
-              appendNewScan={appendNewScan}
-              executing={executing}
-              setExecuting={setExecuting}
-              gIfaces={gIfaces}
-            />
-            <p/>
-          </React.Fragment>;
-        })}
+        <ComplexStategySetting defaultFilter={defaultFilter} defaultStrategy={defaultStrategy}/>
       </TcErrorBoundary>
     </Container>
   </TcErrorBoundary>;
 }
 
-function SingleStategySetting({defaultFilter, defaultStrategy}) {
+function ComplexStategySetting({defaultFilter, defaultStrategy, defaultStrategy2}) {
   const [executing, setExecuting] = React.useState(false);
   const [refresh, setRefresh] = React.useState(0);
   const [validated, setValidated] = React.useState(false);
@@ -74,11 +61,18 @@ function SingleStategySetting({defaultFilter, defaultStrategy}) {
   const [direction, setDirection] = React.useState(defaultFilter.direction || 'incoming');
   const [identifyKey, setIdentifyKey] = React.useState(defaultFilter.identifyKey || 'all');
   const [identifyValue, setIdentifyValue] = React.useState(defaultFilter.identifyValue);
+  // First strategy.
   const [strategy, setStrategy] = React.useState(defaultStrategy.strategy || 'loss');
   const [loss, setLoss] = React.useState(defaultStrategy.loss || '1');
-  const [delay, setDelay] = React.useState(defaultStrategy.delay || '1');
+  const [delay, setDelay] = React.useState(defaultStrategy.delay || '10');
   const [rate, setRate] = React.useState(defaultStrategy.rate || '1000000');
   const [delayDistro, setDelayDistro] = React.useState(defaultStrategy.delayDistro);
+  // Second strategy.
+  const [strategy2, setStrategy2] = React.useState(defaultStrategy.strategy2 || 'delay');
+  const [loss2, setLoss2] = React.useState(defaultStrategy.loss2 || '1');
+  const [delay2, setDelay2] = React.useState(defaultStrategy.delay2 || '10');
+  const [rate2, setRate2] = React.useState(defaultStrategy.rate2 || '1000000');
+  const [delayDistro2, setDelayDistro2] = React.useState(defaultStrategy.delayDistro2);
 
   const [gIfaces, setGIfaces] = React.useState();
   const [ifbs, setIfbs] = React.useState();
@@ -128,16 +122,24 @@ function SingleStategySetting({defaultFilter, defaultStrategy}) {
       setValidated(true);
       return;
     }
-    if (!strategy || strategy === 'no') {
+    if ((!strategy || strategy === 'no') && (!strategy2 || strategy2 === 'no')) {
       return alert('请选择策略');
+    }
+    if (strategy == strategy2) {
+      return alert('重复的弱网策略');
     }
     if (delayDistro && Number(delayDistro) > Number(delay)) {
       return alert(`延迟抖动${delayDistro}不能大于延迟${delay}`);
     }
+    if (delayDistro2 && Number(delayDistro2) > Number(delay2)) {
+      return alert(`延迟抖动${delayDistro2}不能大于延迟${delay2}`);
+    }
 
-    SimpleStrategyStorage.saveFilter(iface, protocol, direction, identifyKey, identifyValue);
-    SimpleStrategyStorage.saveStrategy(strategy, loss, delay, rate, delayDistro);
-    console.log(`save iface=${iface}, protocol=${protocol}, direction=${direction}, identify=${identifyKey}/${identifyValue}, strategy=${strategy}, loss=${loss}, delay=${delay}, rate=${rate}, delayDistro=${delayDistro}`);
+    ComplexStrategyStorage.saveFilter(iface, protocol, direction, identifyKey, identifyValue);
+    ComplexStrategyStorage.saveStrategy(strategy, loss, delay, rate, delayDistro, strategy2, loss2, delay2, rate2, delayDistro2);
+    console.log(`save iface=${iface}, protocol=${protocol}, direction=${direction}, identify=${identifyKey}/${identifyValue}, ` +
+      `strategy=${strategy}, loss=${loss}, delay=${delay}, rate=${rate}, delayDistro=${delayDistro}, ` +
+      `strategy2=${strategy2}, loss2=${loss2}, delay2=${delay2}, rate2=${rate2}, delayDistro2=${delayDistro2}`);
 
     setExecuting(true);
     const queries = [
@@ -151,9 +153,14 @@ function SingleStategySetting({defaultFilter, defaultStrategy}) {
       delay && strategy === 'delay' ? `delay=${delay}` : null,
       rate && strategy === 'rate' ? `rate=${rate}` : null,
       delayDistro && strategy === 'delay' ? `delayDistro=${delayDistro}` : null,
+      strategy2 && strategy2 !== 'no' ? `strategy2=${strategy2}` : null,
+      loss2 && strategy2 === 'loss' ? `loss2=${loss2}` : null,
+      delay2 && strategy2 === 'delay' ? `delay2=${delay2}` : null,
+      rate2 && strategy2 === 'rate' ? `rate2=${rate2}` : null,
+      delayDistro2 && strategy2 === 'delay' ? `delayDistro2=${delayDistro2}` : null,
       `api=${window.location.port}`,
     ].filter(e => e);
-    axios.get(`/tc/api/v1/config/setup?${queries.join('&')}`).then(res => {
+    axios.get(`/tc/api/v1/config/setup2?${queries.join('&')}`).then(res => {
       const conf = res?.data?.data;
       console.log(`query ok, ${queries.join(', ')}, conf=${JSON.stringify(conf)}`);
     }).catch(handleError).finally(async () => {
@@ -164,6 +171,7 @@ function SingleStategySetting({defaultFilter, defaultStrategy}) {
   }, [
     iface, protocol, direction, identifyKey, identifyValue,
     strategy, loss, delay, rate, delayDistro,
+    strategy2, loss2, delay2, rate2, delayDistro2,
     handleError, setExecuting, ref, setRefresh,
   ]);
 
@@ -187,6 +195,14 @@ function SingleStategySetting({defaultFilter, defaultStrategy}) {
                                setLoss={setLoss} delay={delay} setDelay={setDelay}
                                rate={rate} setRate={setRate} delayDistro={delayDistro}
                                setDelayDistro={setDelayDistro}/>
+            </Col>
+          </Row>
+          <Row>
+            <Col xs='auto'>
+              <StrategySetting strategy={strategy2} setStrategy={setStrategy2} loss={loss2}
+                               setLoss={setLoss2} delay={delay2} setDelay={setDelay2}
+                               rate={rate2} setRate={setRate2} delayDistro={delayDistro2}
+                               setDelayDistro={setDelayDistro2}/>
             </Col>
           </Row>
           <Row>

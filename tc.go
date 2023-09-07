@@ -212,6 +212,29 @@ func TcSetup(ctx context.Context, w http.ResponseWriter, r *http.Request) error 
 	return nil
 }
 
+func TcSetup2(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+	q := r.URL.Query()
+	opts := &NetworkOptions{
+		iface: q.Get("iface"), protocol: q.Get("protocol"), direction: q.Get("direction"),
+		identifyKey: q.Get("identifyKey"), identifyValue: q.Get("identifyValue"),
+		apiPort:  strings.Trim(os.Getenv("API_LISTEN"), ":"),
+		strategy: q.Get("strategy"), loss: q.Get("loss"), delay: q.Get("delay"),
+		rate: q.Get("rate"), delayDistro: q.Get("delayDistro"),
+		strategy2: q.Get("strategy2"), loss2: q.Get("loss2"), delay2: q.Get("delay2"),
+		rate2: q.Get("rate2"), delayDistro2: q.Get("delayDistro2"),
+	}
+	if q.Get("api") != "" {
+		opts.apiPort = q.Get("api")
+	}
+	if err := opts.Execute(ctx); err != nil {
+		return err
+	}
+
+	logger.Tf(ctx, "Setup2 TC for iface=%v", opts.iface)
+	ohttp.WriteData(ctx, w, r, nil)
+	return nil
+}
+
 func TcRaw(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	q := r.URL.Query()
 	cmd := q.Get("cmd")
@@ -314,15 +337,15 @@ type NetworkOptions struct {
 	// The filter to identify, by ip or port.
 	identifyKey, identifyValue string
 	// The network strategy name.
-	strategy string
+	strategy, strategy2 string
 	// If strategy is loss, the loss rate in %.
-	loss string
+	loss, loss2 string
 	// If strategy is delay, the delay in ms.
-	delay string
+	delay, delay2 string
 	// If delayDistro is not empty, it's the delay-distro in ms.
-	delayDistro string
+	delayDistro, delayDistro2 string
 	// If strategy is rate, the bitrate limit in kbps.
-	rate string
+	rate, rate2 string
 	// The api listen port, which should be excluded from the network condition.
 	apiPort string
 }
@@ -349,22 +372,26 @@ func (v *NetworkOptions) Execute(ctx context.Context) error {
 	if v.identifyKey != "all" && v.identifyKey != "serverPort" && v.identifyKey != "clientPort" && v.identifyKey != "clientIp" {
 		return errors.Errorf("invalid identifyKey=%v", v.identifyKey)
 	}
-	if v.strategy == "" {
+	if v.strategy == "" && v.strategy2 == "" {
 		return errors.New("no strategy")
 	}
-	if v.strategy == "loss" && v.loss == "" {
+	if v.strategy == v.strategy2 {
+		return errors.Errorf("duplicated strategy %v", v.strategy)
+	}
+	if (v.strategy == "loss" && v.loss == "") || (v.strategy2 == "loss" && v.loss2 == "") {
 		return errors.New("no loss")
 	}
-	if v.strategy == "delay" && v.delay == "" {
+	if (v.strategy == "delay" && v.delay == "") || (v.strategy2 == "delay" && v.delay2 == "") {
 		return errors.New("no delay")
 	}
-	if v.strategy == "rate" && v.rate == "" {
+	if (v.strategy == "rate" && v.rate == "") || (v.strategy2 == "rate" && v.rate2 == "") {
 		return errors.New("no rate")
 	}
 	logger.Tf(ctx, "Setup network for darwin=%v, iface=%v, protocol=%v, direction=%v, identify=%v/%v, "+
-		"strategy=%v, loss=%v, delay=%v, rate=%v, delayDistro=%v",
+		"strategy=%v, loss=%v, delay=%v, rate=%v, delayDistro=%v, strategy2=%v, loss2=%v, delay2=%v, rate2=%v, "+
+		"delayDistro2=%v",
 		isDarwin, v.iface, v.protocol, v.direction, v.identifyKey, v.identifyKey, v.strategy, v.loss,
-		v.delay, v.rate, v.delayDistro,
+		v.delay, v.rate, v.delayDistro, v.strategy2, v.loss2, v.delay2, v.rate2, v.delayDistro2,
 	)
 
 	// Ignore if the os is darwin because it doesn't support it yet.
@@ -379,21 +406,6 @@ func (v *NetworkOptions) Execute(ctx context.Context) error {
 		"--overwrite",
 		// Use HTB which doesn't require iptables.
 		"--shaping-algo", "htb",
-	}
-
-	// Format the network strategy, that is, loss, delay, rate.
-	if v.strategy == "loss" {
-		args = append(args, "--loss", fmt.Sprintf("%v%%", v.loss))
-	} else if v.strategy == "delay" {
-		args = append(args, "--delay", fmt.Sprintf("%vms", v.delay))
-	} else if v.strategy == "rate" {
-		// Note that tc is in kbit, while tcset is in kbps.
-		args = append(args, "--rate", fmt.Sprintf("%vkbps", v.rate))
-	}
-
-	// Append other arguments.
-	if v.delayDistro != "" {
-		args = append(args, "--delay-distro", fmt.Sprintf("%v", v.delayDistro))
 	}
 
 	// For direction outgoing, client pull stream from server.
@@ -425,6 +437,32 @@ func (v *NetworkOptions) Execute(ctx context.Context) error {
 			args = append(args, "--src-port", v.identifyValue)
 		}
 	}
+
+	// Build the first strategy.
+	buildStrategyArgs := func(args []string, strategy, loss, delay, rate, delayDistro string) []string {
+		// Ignore empty strategy.
+		if strategy == "" {
+			return args
+		}
+
+		// Format the network strategy, that is, loss, delay, rate.
+		if strategy == "loss" {
+			args = append(args, "--loss", fmt.Sprintf("%v%%", loss))
+		} else if strategy == "delay" {
+			args = append(args, "--delay", fmt.Sprintf("%vms", delay))
+		} else if strategy == "rate" {
+			// Note that tc is in kbit, while tcset is in kbps.
+			args = append(args, "--rate", fmt.Sprintf("%vkbps", rate))
+		}
+
+		// Append other arguments.
+		if delayDistro != "" {
+			args = append(args, "--delay-distro", fmt.Sprintf("%v", delayDistro))
+		}
+		return args
+	}
+	args = buildStrategyArgs(args, v.strategy, v.loss, v.delay, v.rate, v.delayDistro)
+	args = buildStrategyArgs(args, v.strategy2, v.loss2, v.delay2, v.rate2, v.delayDistro2)
 
 	args = append(args, v.iface)
 	if b, err := exec.CommandContext(ctx, "tcset", args...).CombinedOutput(); err != nil {

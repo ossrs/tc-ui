@@ -15,7 +15,7 @@ import (
 	"strings"
 )
 
-const version = "1.0.7"
+const version = "1.0.8"
 
 func main() {
 	ctx := logger.WithContext(context.Background())
@@ -107,6 +107,14 @@ func doMain(ctx context.Context) error {
 	logger.Tf(ctx, "Handle %v", ep)
 	http.HandleFunc(ep, func(w http.ResponseWriter, r *http.Request) {
 		if err := TcSetup(logger.WithContext(ctx), w, r); err != nil {
+			ohttp.WriteError(ctx, w, r, err)
+		}
+	})
+
+	ep = "/tc/api/v1/config/setup2"
+	logger.Tf(ctx, "Handle %v", ep)
+	http.HandleFunc(ep, func(w http.ResponseWriter, r *http.Request) {
+		if err := TcSetup2(logger.WithContext(ctx), w, r); err != nil {
 			ohttp.WriteError(ctx, w, r, err)
 		}
 	})

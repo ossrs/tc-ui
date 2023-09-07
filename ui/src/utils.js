@@ -60,3 +60,31 @@ export const SimpleStrategyStorage = {
     localStorage.removeItem('TC_UI_SIMPLE_STRATEGY_STRATEGY');
   }
 };
+
+export const ComplexStrategyStorage = {
+  saveFilter: (iface, protocol, direction, identifyKey, identifyValue) => {
+    localStorage.setItem('TC_UI_COMPLEX_STRATEGY_FILTER', JSON.stringify({
+      iface, protocol, direction, identifyKey, identifyValue,
+    }));
+  },
+  loadFilter: () => {
+    const info = localStorage.getItem('TC_UI_COMPLEX_STRATEGY_FILTER');
+    return info ? JSON.parse(info) : null;
+  },
+  clearFilter: () => {
+    localStorage.removeItem('TC_UI_COMPLEX_STRATEGY_FILTER');
+  },
+  saveStrategy: (strategy, loss, delay, rate, delayDistro, strategy2, loss2, delay2, rate2, delayDistro2) => {
+    localStorage.setItem('TC_UI_COMPLEX_STRATEGY_STRATEGY', JSON.stringify({
+      strategy, loss, delay, rate, delayDistro,
+      strategy2, loss2, delay2, rate2, delayDistro2,
+    }));
+  },
+  loadStrategy: () => {
+    const info = localStorage.getItem('TC_UI_COMPLEX_STRATEGY_STRATEGY');
+    return info ? JSON.parse(info) : null;
+  },
+  clearStrategy: () => {
+    localStorage.removeItem('TC_UI_COMPLEX_STRATEGY_STRATEGY');
+  }
+};

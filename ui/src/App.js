@@ -5,6 +5,7 @@ import {ErrorBoundary} from "react-error-boundary";
 import {BrowserRouter, Route, Routes, useLocation, useNavigate} from "react-router-dom";
 import SingleStategy from "./pages/SingleStategy";
 import Navigator from "./pages/Navigator";
+import ComplexStategy from "./pages/ComplexStategy";
 
 export default function App() {
   return (
@@ -57,6 +58,7 @@ function AppImpl() {
         <Navigator/>
         <Routes>
           <Route path="/tc/p/SingleStategy" element={<SingleStategy/>}/>
+          <Route path="/tc/p/ComplexStategy" element={<ComplexStategy/>}/>
           <Route path="*" element={<AppDefault/>}/>
         </Routes>
       </BrowserRouter>
