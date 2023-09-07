@@ -3,6 +3,8 @@
 WebUI for [tcconfig](https://github.com/thombashi/tcconfig) which wraps
 [TC(Linux Traffic Control)](https://lartc.org/howto/index.html)
 
+<img width="576" alt="tcui" src="https://github.com/ossrs/tc-ui/assets/2777660/91fb5051-6ace-4c3e-9364-1a2a526be62b">
+
 ## Usage
 
 Ensure there is `ifb.ko` on your server:
