@@ -9,33 +9,6 @@ import {ComplexStrategyStorage} from "../utils";
 import {StrategySetting} from "../components/StrategySetting";
 
 export default function ComplexStategy() {
-  const [scanPanels, setScanPanels] = React.useState([0]);
-  const [executing, setExecuting] = React.useState(false);
-  const [gIfaces, setGIfaces] = React.useState();
-  const handleError = useErrorHandler();
-
-  // Update whether it has ifb interface.
-  React.useEffect(() => {
-    if (!setGIfaces) return;
-
-    axios.get('/tc/api/v1/init').then(res => {
-      const data = res?.data?.data;
-      console.log(`TC: Init ok, ${JSON.stringify(data)}`);
-      setGIfaces(data?.ifaces);
-    }).catch(handleError);
-  }, [handleError, setGIfaces]);
-
-  // For callback to update state, because in callback we can only get the copy, so we need a ref to point to the latest
-  // copy of state of variant objects.
-  const ref = React.useRef({});
-  React.useEffect(() => {
-    ref.current.scanPanels = scanPanels;
-  }, [scanPanels]);
-
-  const appendNewScan = React.useCallback(() => {
-    setScanPanels([ref.current.scanPanels.length, ...ref.current.scanPanels]);
-  }, [setScanPanels, ref]);
-
   // Load filter and strategy from storage.
   const defaultFilter = ComplexStrategyStorage.loadFilter() || {};
   const defaultStrategy = ComplexStrategyStorage.loadStrategy() || {};
@@ -50,7 +23,7 @@ export default function ComplexStategy() {
   </TcErrorBoundary>;
 }
 
-function ComplexStategySetting({defaultFilter, defaultStrategy, defaultStrategy2}) {
+function ComplexStategySetting({defaultFilter, defaultStrategy}) {
   const [executing, setExecuting] = React.useState(false);
   const [refresh, setRefresh] = React.useState(0);
   const [validated, setValidated] = React.useState(false);
@@ -125,7 +98,7 @@ function ComplexStategySetting({defaultFilter, defaultStrategy, defaultStrategy2
     if ((!strategy || strategy === 'no') && (!strategy2 || strategy2 === 'no')) {
       return alert('请选择策略');
     }
-    if (strategy == strategy2) {
+    if (strategy === strategy2) {
       return alert('重复的弱网策略');
     }
     if (delayDistro && Number(delayDistro) > Number(delay)) {
