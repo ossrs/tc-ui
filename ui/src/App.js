@@ -8,6 +8,13 @@ import Navigator from "./pages/Navigator";
 import ComplexStategy from "./pages/ComplexStategy";
 
 export default function App() {
+  React.useEffect(() => {
+    const l = window.location;
+    const q = encodeURI('tcshow lo');
+    console.log(`HTTP API by GET or POST, see https://github.com/ossrs/tc-ui#http-openapi`);
+    console.log(`    ${l.protocol}//${l.host}/tc/api/v1/config/raw?cmd=${q}`);
+  }, []);
+
   return (
     <ErrorBoundary FallbackComponent={(RootError)}>
       <AppImpl/>
