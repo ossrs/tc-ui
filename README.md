@@ -92,12 +92,6 @@ For TC command, see:
 
 ## Development in macOS
 
-Build UI:
-
-```bash
-(cd ui && npm install && npm run build)
-```
-
 Run Go API server in Ubuntu20 server or docker:
 
 ```bash
@@ -108,6 +102,14 @@ docker run --privileged --rm -it -p 2023:2023 -v $(pwd):/g -w /g test go run .
 > Note: Note that macOS docker doesn't support ingress, which requires kernel module ifb.
 
 > Note: Must run with `--privileged` or failed to run `tc` and `tcpdump` commands.
+
+Build UI:
+
+```bash
+(cd ui && npm install && npm run build)
+# Or
+(cd ui && npm install && npm run start)
+```
 
 Open http://localhost:3000/ in browser.
 
