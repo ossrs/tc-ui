@@ -15,7 +15,7 @@ import (
 	"strings"
 )
 
-const version = "1.0.9"
+const version = "1.0.10"
 
 func main() {
 	ctx := logger.WithContext(context.Background())
