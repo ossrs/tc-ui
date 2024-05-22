@@ -38,6 +38,75 @@ Open [http://localhost:2023](http://localhost:2023) in browser.
 
 > Note: Because no host network, you should run command or application in container, for example, ping after setup the delay of network.
 
+## Concepts of TC
+
+About the terminology of TC, see [Terminology](https://lartc.org/howto/lartc.qdisc.terminology.html).
+
+```text
+                Userspace programs
+                     ^
+                     |
+     +---------------+-----------------------------------------+
+     |               Y                                         |
+     |    -------> IP Stack                                    |
+     |   |              |                                      |
+     |   |              Y                                      |
+     |   |              Y                                      |
+     |   ^              |                                      |
+     |   |  / ----------> Forwarding ->                        |
+     |   ^ /                           |                       |
+     |   |/                            Y                       |
+     |   |                             |                       |
+     |   ^                             Y          /-qdisc1-\   |
+     |   |                            Egress     /--qdisc2--\  |
+  --->->Ingress                       Classifier ---qdisc3---- | ->
+     |   Qdisc                                   \__qdisc4__/  |
+     |                                            \-qdiscN_/   |
+     |                                                         |
+     +----------------------------------------------------------+
+```
+
+> Note: There is a note about this diagram in Chinese if you want, see [link](https://arthurchiao.art/blog/lartc-qdisc-zh/#4-%E6%9C%AF%E8%AF%AD).
+
+The qdisc, handle and class is a hierarchy, but not the network path, see [Classful Queueing Disciplines](https://lartc.org/howto/lartc.qdisc.classful.html):
+
+```text
+          1:   root qdisc
+           |
+          1:1    child class
+        /  |  \
+       /   |   \
+      /    |    \
+      /    |    \
+   1:10  1:11  1:12   child classes
+    |      |     | 
+    |     11:    |    leaf class
+    |            | 
+    10:         12:   qdisc
+   /   \       /   \
+10:1  10:2   12:1  12:2   leaf classes
+```
+
+The prio qdisc is a common used qdisc, see [The PRIO qdisc](https://lartc.org/howto/lartc.qdisc.classful.html):
+
+```text
+          1:   root qdisc
+         / | \ 
+       /   |   \
+       /   |   \
+     1:1  1:2  1:3    classes
+      |    |    |
+     10:  20:  30:    qdiscs    qdiscs
+     sfq  tbf  sfq
+band  0    1    2
+```
+
+[HTB](http://linux-ip.net/articles/Traffic-Control-HOWTO/classful-qdiscs.html) uses the concepts of tokens and buckets 
+along with the class-based system and filters to allow for complex and granular control over traffic.
+
+You can also use BPF in tc, see [Understanding tc “direct action” mode for BPF](https://qmonnet.github.io/whirl-offload/2020/04/11/tc-bpf-direct-action/) 
+or [tea](https://github.com/winlinvip/tea#links-tc).
+
 ## Export and Load Docker Image
 
 If want to export the docker image:
