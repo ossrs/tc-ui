@@ -1,7 +1,7 @@
 # tc-ui
 
 WebUI for [tcconfig](https://github.com/thombashi/tcconfig) which wraps
-[TC(Linux Traffic Control)](https://lartc.org/howto/index.html)
+[TC(Linux Traffic Control)](https://lartc.org/howto/index.html) on Linux servers.
 
 <img width="576" alt="tcui" src="https://github.com/ossrs/tc-ui/assets/2777660/91fb5051-6ace-4c3e-9364-1a2a526be62b">
 
@@ -25,6 +25,18 @@ docker run --network=host --privileged -it --restart always -d \
 > Note: Please use `registry.cn-hangzhou.aliyuncs.com/ossrs/tc-ui:1` in China.
 
 Open [http://localhost:2023](http://localhost:2023) in browser.
+
+## Usage for Mac
+
+Note that Mac does not support host network, nor ifb, so can only be used for outgoing network:
+
+```bash
+docker run --rm -it --privileged --name tc -p 2023:2023 ossrs/tc-ui:1
+```
+
+Open [http://localhost:2023](http://localhost:2023) in browser.
+
+> Note: Because no host network, you should run command or application in container, for example, ping after setup the delay of network.
 
 ## Export and Load Docker Image
 
